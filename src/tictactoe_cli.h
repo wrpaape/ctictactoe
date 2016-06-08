@@ -46,6 +46,16 @@ struct Options {
 	wchar32_t ;
 };
 
+struct BoardBuffer {
+	char display[BOARD_DISPLAY_SIZE];
+	char *cache_boundary;
+};
+
+struct Prompt {
+	const char **player_name;
+	const char *before_name;
+	const char *after_name;
+};
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * TYPEDEFS, ENUM AND STRUCT DEFINITIONS

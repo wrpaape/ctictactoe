@@ -13,8 +13,7 @@ extern "C" {
 /* EXTERNAL DEPENDENCIES
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
-#include <string_utils/utf8.h>	/* UTF8Char, uint16_t */
-#include <string_utils/token.h>	/* token macros */
+#include <string_utils/string_utils.h>	/* fgets_utf8, extend_string, token.h */
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * EXTERNAL DEPENDENCIES
@@ -26,40 +25,61 @@ extern "C" {
 
 typedef MoveSet uint16_t;
 
+typedef unsigned int HandleGetMove(struct Player *,
+				   struct Board *);
+
+typedef void HandleGameOver(struct Player *);
+
 struct Token {
-	struct UTF8Char utf8_char;
-	byte_t display[14];
+	char raw[MAX_LENGTH_INPUT];
+	char pretty[MAX_LENGTH_INPUT + 20ul]; /* additional room for ANSI
+						 escape sequences */
 };
 
 struct Player {
-	byte_t name[MAX_NAME_LENGTH];
-	struct Token token;
+	struct Token name;
+	struct Token mark;
 	MoveSet moves;
-	struct Player *next;
+	HandleGetMove *get_move;
 };
 
-struct BoardString {
+struct BoardPiece {
 	const char *piece;
 	struct BoardCell *next;
 };
 
 struct BoardCell {
-	bool taken;
+	bool is_marked;
 	const char *token;
-	struct BoardString *next;
-};
-
-struct Prompt {
-	const char *const before_name;
-	const char **player_name;
-	const char *const after_name;
+	struct BoardPiece *next;
 };
 
 
+
+struct Game {
+	size_t turn;
+
+	struct CLI cli;
+	struct Player players[2ul];
+	struct Board board;
+};
+
+struct EndGame {
+	bool *gameover;
+	MoveSet *moves
+	size_t 
+	size_t count;
+};
+
+struct EndGame {
+	struct GameOver *tie;
+	struct GameOver *win;
+};
 
 struct Board {
-	byte_t *display;
-	MoveSet taken;
+	size_t cell_count;
+	bool *win_states;
+	MoveSet moves;
 };
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
@@ -69,45 +89,6 @@ struct Board {
  * GLOBAL VARIABLES
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
-#define NAME_BUFFER ""
-#define MAX_NAME_LENGTH 32ul
-
-#define TOKEN_DISPLAY_WIDTH sizeof(ANSI_)
-
-#define CELL_PAD " "
-
-#define PAD_CELL(CELL) CELL_PAD CELL CELL_PAD
-
-#define ANSI_WRAP(TEXT, SEQ) ANSI_ ## SEQ TEXT ANSI_RESET
-
-#define CURSOR ANSI_WRAP(">", BLINK)
-
-#define CELL(CHAR) PAD_CELL(ANSI_WRAP(CHAR, FAINT))
-
-#define LINE_ROW_3(L, M, R) L "───" M "───" M "───" R "\n"
-#define CELL_ROW_3(X, Y, Z) "│" CELL(X) "│" CELL(Y) "│" CELL(Z) "│\n"
-
-static byte_t BOARD_DISPLAY_3 = ANSI_CLEAR
-				LINE_ROW_3("┌", "┬", "┐")
-				CELL_ROW_3("1", "2", "3")
-				LINE_ROW_3("├", "┼", "┤")
-				CELL_ROW_3("q", "w", "e")
-				LINE_ROW_3("├", "┼", "┤")
-				CELL_ROW_3("a", "s", "d")
-				LINE_ROW_3("└", "┴", "┘")
-
-static struct Board empty_3 = {
-	.display = EMPTY_DISPLAY_3,
-
-}
-
-
-
-static ptrdiff_t move_map_3[] = {
-	 44,  50,  56,
-	105, 111, 117,
-	166, 172, 178
-}
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * GLOBAL VARIABLES
