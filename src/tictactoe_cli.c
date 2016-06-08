@@ -1,4 +1,6 @@
 #include "tictactoe_cli.h"
 
 
-void new_game(struct Options *options)
+void configure_new_game(struct Options *options)
+{
+}
