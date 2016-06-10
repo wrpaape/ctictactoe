@@ -27,8 +27,8 @@ static struct Board empty_3 = {
 
 
 
-static ptrdiff_t move_map_3[] = {
-	 44,  50,  56,
-	105, 111, 117,
-	166, 172, 178
-}
+/* static ptrdiff_t move_map_3[] = { */
+/* 	 44,  50,  56, */
+/* 	105, 111, 117, */
+/* 	166, 172, 178 */
+/* } */

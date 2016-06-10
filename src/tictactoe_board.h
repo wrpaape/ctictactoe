@@ -15,6 +15,8 @@ extern "C" {
 
 #include <string_utils/string_utils.h>	/* fgets_utf8, extend_string, token.h */
 
+#include <container/set/bit_vector.h>	/* BitVector */
+
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * EXTERNAL DEPENDENCIES
  *
@@ -23,63 +25,86 @@ extern "C" {
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
 
-typedef MoveSet uint16_t;
+
+typedef uint16_t MoveHash;
 
 typedef unsigned int HandleGetMove(struct Player *,
 				   struct Board *);
 
 typedef void HandleGameOver(struct Player *);
 
+
+
+
+
+/* config then constant */
 struct Token {
 	char raw[MAX_LENGTH_INPUT];
 	char pretty[MAX_LENGTH_INPUT + 20ul]; /* additional room for ANSI
 						 escape sequences */
 };
 
-struct Player {
+/* config then constant */
+struct PlayerSpec {
 	struct Token name;
 	struct Token mark;
-	MoveSet moves;
 	HandleGetMove *get_move;
 };
 
-struct BoardPiece {
-	const char *piece;
-	struct BoardCell *next;
+struct Player {
+	struct BitVector moves; /* state */
+	struct PlayerSpec;
 };
 
-struct BoardCell {
+
+/* config then constant */
+struct BoardSpec {
+	size_t count_cells;
+	size_t count_winners;
+	struct BitVector *winners;
+	struct BitVector winners_map;
+};
+
+/* compile-time constant */
+struct GameOver {
+	HandleGameOver *player_wins;
+	HandleGameOver *players_tie;
+};
+
+struct BoardDisplayString {
+	char *const full;	/* start of entire string */
+	char *unstable;		/* start of unsettle portion */
+};
+
+
+struct BoardDisplay {
+	struct BoardDisplayString string;
+	struct BoardDisplayPiece *pieces;	/* start of entire board template */
+	struct BoardDisplayCell *cells;		/* start of dynamic portion */
+};
+
+struct BoardDisplayPiece {
+	const char *pretty;			/* string representation */
+	struct BoardDisplayCell *next_cell;	/* next cell */
+};
+
+struct BoardDisplayCell {
 	bool is_marked;
-	const char *token;
-	struct BoardPiece *next;
+	const char *pretty;			/* string representation */
+	struct BoardDisplayPiece *next_piece;	/* next static cell joiner */
 };
 
-
-
-struct Game {
-	size_t turn;
-
-	struct CLI cli;
-	struct Player players[2ul];
-	struct Board board;
-};
-
-struct EndGame {
-	bool *gameover;
-	MoveSet *moves
-	size_t 
-	size_t count;
-};
-
-struct EndGame {
-	struct GameOver *tie;
-	struct GameOver *win;
-};
 
 struct Board {
-	size_t cell_count;
-	bool *win_states;
-	MoveSet moves;
+	struct BitVector cells;	/* state */
+	struct BoardSpec spec;
+	struct BoardDisplay display;
+	struct GameOver game_over;
+};
+
+struct TicTacToe {
+	struct Player players[2];
+	struct Board board;
 };
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
