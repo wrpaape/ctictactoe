@@ -52,55 +52,78 @@ struct PlayerSpec {
 };
 
 struct Player {
-	struct BitVector moves; /* state */
+	struct BitVector moves; /* stateful */
 	struct PlayerSpec;
 };
 
 
 /* config then constant */
 struct BoardSpec {
-	size_t count_cells;
-	size_t count_winners;
+	unsigned int count_cells;
+	unsigned int count_winners;
 	struct BitVector *winners;
 	struct BitVector winners_map;
 };
 
-/* compile-time constant */
-struct GameOver {
-	HandleGameOver *player_wins;
-	HandleGameOver *players_tie;
-};
-
-struct BoardDisplayString {
-	char *const full;	/* start of entire string */
-	char *unstable;		/* start of unsettle portion */
-};
-
-
-struct BoardDisplay {
-	struct BoardDisplayString string;
-	struct BoardDisplayPiece *pieces;	/* start of entire board template */
-	struct BoardDisplayCell *cells;		/* start of dynamic portion */
-};
-
 struct BoardDisplayPiece {
-	const char *pretty;			/* string representation */
-	struct BoardDisplayCell *next_cell;	/* next cell */
+	const char *pretty;			/* box characters */
+	struct BoardDisplayCell *next_cell;	/* next cell string */
 };
 
 struct BoardDisplayCell {
 	bool is_marked;
-	const char *pretty;			/* string representation */
-	struct BoardDisplayPiece *next_piece;	/* next static cell joiner */
+	const char *pretty;			/* mark or placeholder */
+	struct BoardDisplayPiece *next_piece;	/* next piece string */
+};
+
+struct BoardDisplayGuide {
+	struct BoardDisplayPiece *pieces;	/* start of board template */
+	struct BoardDisplayCell *cells;		/* start of unsettled portion */
+};
+
+struct BoardDisplayBuffer {
+	char *commplete;	/* start of entire string */
+	char *unsettled;	/* start of unsettled portion */
+};
+
+struct BoardDisplay {
+	struct BoardDisplayGuide guide;		/* string building template */
+	struct BoardDisplayBuffer buffer;	/* string representation */
 };
 
 
 struct Board {
-	struct BitVector cells;	/* state */
-	struct BoardSpec spec;
-	struct BoardDisplay display;
-	struct GameOver game_over;
+	struct BitVector cells;		/* stateful */
+	struct BoardDisplay display;	/* stateful */
+	struct BoardSpec spec;		/* config then constant */
 };
+
+
+enum ControllerMode {
+	PLAYER_VERSUS_PLAYER,
+	PLAYER_VERSUS_COMPUTER,
+	COMPUTER_VERSUS_COMPUTER
+};
+
+
+struct ControllerFilter {
+	unsigned int min;
+	unsigned int max;
+};
+
+struct ControllerQuery {
+	const char *prompt;		/* text */
+	struct ControllerFilter filter;	/* query filter */
+	struct ControllerPrompt *next;	/* next query */
+};
+
+
+struct Controller {
+	enum ControllerMode mode;
+	struct ControllerQuery *queries;
+};
+
+
 
 struct TicTacToe {
 	struct Player players[2];
@@ -143,7 +166,7 @@ char move_to_display[3][3];
 
 inline void put_move(char *const restrict display,
 		     const char token,
-		     const size_t i_move);
+		     const unsigned int i_move);
 {
 }
 
