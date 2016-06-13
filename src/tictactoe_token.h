@@ -1,5 +1,5 @@
-#ifndef TICTACTOE_TICTACTOE_BOARD_H_
-#define TICTACTOE_TICTACTOE_BOARD_H_
+#ifndef TICTACTOE_TICTACTOE_TOKEN_H_
+#define TICTACTOE_TICTACTOE_TOKEN_H_
 
 #ifdef __cplusplus /* ensure C linkage */
 extern "C" {
@@ -9,100 +9,48 @@ extern "C" {
 #endif
 
 
-
 /* EXTERNAL DEPENDENCIES
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
-#include <container/set/bit_vector.h>	/* BitVector */
+#include <string_utils/string_utils.h>	/* fgets_utf8, put_string, token.h */
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * EXTERNAL DEPENDENCIES
  *
  *
+ * CONSTANTS
+ * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
+
+#define TOKEN_ANSI_MAX_SIZE 5ul
+#define TOKEN_ANSI_SEQ_SIZE (TOKEN_ANSI_MAX_SIZE * 2ul)
+
+#define TOKEN_MARK_RAW_SIZE UTF8_MAX_SIZE
+#define TOKEN_LABEL_RAW_SIZE (UTF8_MAX_SIZE * 25ul)
+
+ /* additional room for ANSI sequence + reset */
+#define TOKEN_LABEL_PRETTY_SIZE (TOKEN_LABEL_RAW_SIZE	\
+			       + TOKEN_ANSI_SEQ_SIZE	\
+			       + sizeof(ANSI_RESET))
+
+/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+ * CONSTANTS
+ *
+ *
  * TYPEDEFS, ENUM AND STRUCT DEFINITIONS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
-typedef uint16_t MoveHash;
-
-typedef unsigned int HandleGetMove(struct Player *,
-				   struct Board *);
-
-typedef void HandleGameOver(struct Player *);
-
-
-
-/* config then constant */
-struct PlayerSpec {
-	struct Token name;
-	struct Token mark;
-	HandleGetMove *get_move;
+struct TokenMark {
+	char raw[TOKEN_MARK_RAW_SIZE];
+	char ansi[TOKEN_ANSI_SEQ_SIZE];
 };
 
-struct Player {
-	struct BitVector moves; /* stateful */
-	struct PlayerSpec;
-};
-
-
-/* config then constant */
-struct BoardSpec {
-	unsigned int count_cells;
-	unsigned int count_winners;
-	struct BitVector *winners;
-	struct BitVector winners_map;
-};
-
-
-
-
-struct Board {
-	struct BitVector cells;		/* stateful */
-	struct BoardSpec spec;		/* config then constant */
-};
-
-
-enum ControllerMode {
-	PLAYER_VERSUS_PLAYER,
-	PLAYER_VERSUS_COMPUTER,
-	COMPUTER_VERSUS_COMPUTER
-};
-
-
-struct ControllerFilter {
-	unsigned int min;
-	unsigned int max;
-};
-
-struct ControllerQuery {
-	const char *prompt;		/* text */
-	struct ControllerFilter filter;	/* query filter */
-	struct ControllerPrompt *next;	/* next query */
-};
-
-
-struct Controller {
-	enum ControllerMode mode;
-	struct ControllerQuery *queries;
-};
-
-
-
-
-struct Controller {
-	struct Player players[2];
-	struct Board board;
+struct TokenLabel {
+	char raw[TOKEN_LABEL_RAW_SIZE];
+	char pretty[TOKEN_LABEL_PRETTY_SIZE];
 };
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * TYPEDEFS, ENUM AND STRUCT DEFINITIONS
- *
- *
- * GLOBAL VARIABLES
- * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
-
-
-/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
- * GLOBAL VARIABLES
  *
  *
  * FUNCTION-LIKE MACROS
@@ -113,26 +61,12 @@ struct Controller {
  *
  * TOP-LEVEL FUNCTIONS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
-
-void init_board(struct Board *board);
-
-void print_board(struct Board *board);
-
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * TOP-LEVEL FUNCTIONS
  *
  *
  * HELPER FUNCTIONS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
-
-char move_to_display[3][3];
-
-inline void put_move(char *const restrict display,
-		     const char token,
-		     const unsigned int i_move);
-{
-}
-
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * HELPER FUNCTIONS */
 
@@ -141,4 +75,4 @@ inline void put_move(char *const restrict display,
 }
 #endif
 
-#endif /* ifndef TICTACTOE_TICTACTOE_BOARD_H_ */
+#endif /* ifndef TICTACTOE_TICTACTOE_TOKEN_H_ */

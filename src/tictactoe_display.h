@@ -1,5 +1,5 @@
-#ifndef TICTACTOE_TICTACTOE_BOARD_H_
-#define TICTACTOE_TICTACTOE_BOARD_H_
+#ifndef TICTACTOE_TICTACTOE_DISPLAY_H_
+#define TICTACTOE_TICTACTOE_DISPLAY_H_
 
 #ifdef __cplusplus /* ensure C linkage */
 extern "C" {
@@ -9,11 +9,11 @@ extern "C" {
 #endif
 
 
-
 /* EXTERNAL DEPENDENCIES
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
-#include <container/set/bit_vector.h>	/* BitVector */
+#include "tictactoe_token.h"		/* struct Token */
+#include <system_utils/stdio_utils.h>	/* stdio winsizee, misc handlers */
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * EXTERNAL DEPENDENCIES
@@ -22,87 +22,90 @@ extern "C" {
  * TYPEDEFS, ENUM AND STRUCT DEFINITIONS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
-typedef uint16_t MoveHash;
-
-typedef unsigned int HandleGetMove(struct Player *,
-				   struct Board *);
-
-typedef void HandleGameOver(struct Player *);
-
-
-
-/* config then constant */
-struct PlayerSpec {
-	struct Token name;
-	struct Token mark;
-	HandleGetMove *get_move;
-};
-
-struct Player {
-	struct BitVector moves; /* stateful */
-	struct PlayerSpec;
-};
-
-
-/* config then constant */
-struct BoardSpec {
-	unsigned int count_cells;
-	unsigned int count_winners;
-	struct BitVector *winners;
-	struct BitVector winners_map;
+struct DisplayBoardLineJoin {
+	const char *left;			/* ├┌└ */
+	const char *center;			/* ┼ characters */
+	const char *right;			/* ┐┤┘ characters */
 };
 
 
 
 
-struct Board {
-	struct BitVector cells;		/* stateful */
-	struct BoardSpec spec;		/* config then constant */
+┬
+┴
+
+
+─
+│
+┼
+
+
+struct DisplayBoardLines {
+	const char *segment;			/* ───... */
+	struct DisplayBoardLineJoin top;
+	struct DisplayBoardLineJoin mid;
+	struct DisplayBoardLineJoin bot;
+};
+
+struct DisplayBoardCell {
+	bool is_marked;
+	struct TokenMark mark;			/* mark or placeholder */
+};
+
+struct DisplayBoardBuffer {
+	char *complete;	/* start of entire string */
+	char *active;	/* start of unsettled portion */
+};
+
+struct DisplayBoard {
+	struct DisplayBoardGuide guide;		/* string building template */
+	struct DisplayBoardBuffer buffer;	/* string representation */
+};
+
+struct DisplayDimTuple {
+	unsigned int x;
+	unsigned int y;
+};
+
+struct DisplayRatioTuple {
+	double x;
+	double y;
+};
+
+struct DisplayContainerDims {
+	struct DisplayDimTuple pad;
+	struct DisplayDimTuple fill;
+	struct DisplayRatioTuple pad_to_fill;
 };
 
 
-enum ControllerMode {
-	PLAYER_VERSUS_PLAYER,
-	PLAYER_VERSUS_COMPUTER,
-	COMPUTER_VERSUS_COMPUTER
-};
+struct DisplayDims {
+	unsigned int cell_count;		/* config on setup */
+	struct winsize window;			/* stateful */
+	struct DisplayContainerDims board;	/* stateful */
+	struct DisplayContainerDims cell;	/* stateful */
+}
 
-
-struct ControllerFilter {
-	unsigned int min;
-	unsigned int max;
-};
-
-struct ControllerQuery {
-	const char *prompt;		/* text */
-	struct ControllerFilter filter;	/* query filter */
-	struct ControllerPrompt *next;	/* next query */
-};
-
-
-struct Controller {
-	enum ControllerMode mode;
-	struct ControllerQuery *queries;
-};
-
-
-
-
-struct Controller {
-	struct Player players[2];
-	struct Board board;
+struct Display {
+	struct DisplayDims dims;	/* stateful */
+	struct DisplayBoard board;	/* stateful */
+	struct DisplayBoardCell **map;	/* config on setup */
 };
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * TYPEDEFS, ENUM AND STRUCT DEFINITIONS
  *
  *
- * GLOBAL VARIABLES
+ * CONSTANTS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
+/* full window dimensions */
+
+#define MAX_ROWS 54ul
+#define MAX_COLS 181ul
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
- * GLOBAL VARIABLES
+ * CONSTANTS
  *
  *
  * FUNCTION-LIKE MACROS
@@ -114,9 +117,10 @@ struct Controller {
  * TOP-LEVEL FUNCTIONS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
-void init_board(struct Board *board);
+void init_display(struct *const restrict Display display);
 
-void print_board(struct Board *board);
+void init_display_dims(struct *const restrict DisplayDims dims,
+		       const unsigned int cell_count);
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * TOP-LEVEL FUNCTIONS
@@ -124,15 +128,6 @@ void print_board(struct Board *board);
  *
  * HELPER FUNCTIONS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
-
-char move_to_display[3][3];
-
-inline void put_move(char *const restrict display,
-		     const char token,
-		     const unsigned int i_move);
-{
-}
-
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * HELPER FUNCTIONS */
 
@@ -141,4 +136,4 @@ inline void put_move(char *const restrict display,
 }
 #endif
 
-#endif /* ifndef TICTACTOE_TICTACTOE_BOARD_H_ */
+#endif /* ifndef TICTACTOE_TICTACTOE_DISPLAY_H_ */
