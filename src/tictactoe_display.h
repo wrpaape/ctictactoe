@@ -49,43 +49,41 @@ struct DisplayLineSpec {
 	struct DisplayLineJoins bot;
 };
 
-struct DisplayBoardCell {
+struct DisplayCell {
 	bool is_marked;
 	struct TokenMark *mark;	/* mark or placeholder */
 };
 
 struct DisplayBuffer {
-	char complete[MAX_DISPLAY_SIZE];
 	char *active;	/* start of unsettled portion */
+	char complete[MAX_DISPLAY_SIZE];
 };
 
 struct DisplayString {
 	struct DisplayBuffer buffer;		/* string representation */
-	struct DisplayBoardCell *cells;		/* stateful */
+	struct DisplayCell *cells;		/* stateful */
 	struct DisplayLineSpec line_pieces;	/* config on setup */
 };
 
 
-struct DimSpec {
+struct DisplayDimSpec {
+	double pad_ratio;	/* pad / total */
 	unsigned int pad;
 	unsigned int fill;
 	unsigned int total;
-	double pad_total;	/* pad / total */
 };
 
-struct DimGroup {
-	struct DimSpec board;	/* stateful */
-	struct DimSpec cell;	/* stateful */
+struct DisplayDimGroup {
+	struct DisplayDimSpec board;	/* stateful */
+	struct DisplayDimSpec cell;	/* stateful */
 };
 
 struct DisplayDims {
 	unsigned int cell_count;	/* config on setup */
 	struct winsize window;
-	struct DimGroup x;
-	struct DimGroup y;
+	struct DisplayDimGroup x;
+	struct DisplayDimGroup y;
 };
-
-
 
 struct Display {
 	struct DisplayDims dims;		/* stateful */
@@ -105,8 +103,18 @@ struct Display {
  * TOP-LEVEL FUNCTIONS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
-void display_init(struct *const restrict Display display);
+inline void display_init(struct *const restrict Display display,
+			 const unsigned int *const restrict io_move_map,
+			 const unsigned int cell_count)
+{
+	dims_init(&display->dims,
+		  cell_count);
 
+	string_init(&display->string,
+		    io_move_map,
+		    cell_count);
+
+}
 
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
@@ -116,27 +124,21 @@ void display_init(struct *const restrict Display display);
  * HELPER FUNCTIONS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
-static void dims_init(struct *const restrict DisplayDims dims,
-		      const unsigned int cell_count);
+static inline void dims_init(struct *const restrict DisplayDims dims,
+			     const unsigned int cell_count);
 
-static inline void dim_spec_set_pad_fill(struct *const restrict DimSpec spec);
+static inline void dim_group_init(struct *const restrict DisplayDimGroup group,
+				  const unsigned int board_total,
+				  const unsigned int cell_count,
+				  const double board_pad_ratio,
+				  const double cell_pad_ratio);
 
+static inline void dim_spec_init(struct *const restrict DisplayDimSpec spec,
+				 const double pad_ratio,
+				 const unsigned int total);
 
-static inline void board_spec_set(struct *const restrict DisplaySpec board,
-				   const struct *const restrict winsize window);
-
-static inline void dim_pair_set(struct *const restrict DimPair dims,
-				const unsigned int x,
-				const unsigned int y);
-
-static inline void ratio_pair_set(struct *const restrict RatioPair ratios,
-				  const double x,
-				  const double y);
-
-static inline void cell_total_set(struct *const restrict DimPair cell_total,
-				  struct *const restrict DimPair board_total,
-				  const unsigned int cell_count);
-
+static inline void dim_spec_resize(struct *const restrict DisplayDimSpec spec,
+				   const unsigned int new_total);
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * HELPER FUNCTIONS */
 
