@@ -65,29 +65,27 @@ struct DisplayString {
 	struct DisplayLineSpec line_pieces;	/* config on setup */
 };
 
-struct DimPair {
-	unsigned int x;
-	unsigned int y;
-};
-
-struct RatioPair {
-	double x;
-	double y;
-};
 
 struct DimSpec {
-	struct DimPair pad;
-	struct DimPair fill;
-	struct DimPair total;
-	struct RatioPair pad_total;	/* pad / total */
+	unsigned int pad;
+	unsigned int fill;
+	unsigned int total;
+	double pad_total;	/* pad / total */
 };
 
-
-struct DisplayDims {
-	unsigned int cell_count;		/* config on setup */
+struct DimGroup {
 	struct DimSpec board;	/* stateful */
 	struct DimSpec cell;	/* stateful */
 };
+
+struct DisplayDims {
+	unsigned int cell_count;	/* config on setup */
+	struct winsize window;
+	struct DimGroup x;
+	struct DimGroup y;
+};
+
+
 
 struct Display {
 	struct DisplayDims dims;		/* stateful */
