@@ -12,7 +12,8 @@ extern "C" {
 /* EXTERNAL DEPENDENCIES
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
-#include <string_utils/string_utils.h>	/* fgets_utf8, put_string, token.h */
+#include <string_utils/string_utils.h>		/* fgets_utf8, token.h */
+#include <memory_utils/memory_put_array.h>	/* MemoryPutArray */
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * EXTERNAL DEPENDENCIES
@@ -24,8 +25,8 @@ extern "C" {
 #define TOKEN_ANSI_MAX_SIZE 5ul
 #define TOKEN_ANSI_SEQ_SIZE (TOKEN_ANSI_MAX_SIZE * 2ul)
 
-#define TOKEN_MARK_RAW_SIZE UTF8_MAX_SIZE
-#define TOKEN_LABEL_RAW_SIZE (UTF8_MAX_SIZE * 25ul)
+#define TOKEN_MARK_RAW_BUFFER_SIZE UTF8_MAX_SIZE
+#define TOKEN_LABEL_RAW_SIZE (TOKEN_MARK_RAW_BUFFER_SIZE * 25ul)
 
  /* additional room for ANSI sequence + reset */
 #define TOKEN_LABEL_PRETTY_SIZE (TOKEN_LABEL_RAW_SIZE	\
@@ -40,7 +41,8 @@ extern "C" {
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
 struct TokenMark {
-	char raw[TOKEN_MARK_RAW_SIZE];
+	MemoryPutArray *put_array;
+	struct UTF8Char raw;
 	char ansi[TOKEN_ANSI_SEQ_SIZE];
 };
 
@@ -61,12 +63,31 @@ struct TokenLabel {
  *
  * TOP-LEVEL FUNCTIONS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
+
+inline void token_mark_init(const struct TokenMark *const restrict mark,
+			    const char *const restrict mark_string,
+			    const char *const restrict ansi_string)
+{
+	utf8_char_init(&mark->raw,
+		       mark_string);
+}
+
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * TOP-LEVEL FUNCTIONS
  *
  *
  * HELPER FUNCTIONS
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
+
+inline char *token_mark_put_times(char *restrict buffer,
+				  const struct TokenMark *const restrict mark,
+				  const unsigned int times)
+{
+	return (char *) mark->put_array(buffer,
+					&mark->raw.octets,
+					(size_t) times);
+}
+
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * HELPER FUNCTIONS */
 

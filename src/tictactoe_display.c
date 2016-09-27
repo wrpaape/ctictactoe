@@ -1,7 +1,7 @@
 #include "tictactoe_display.h"
 
 extern inline void display_init(struct *const restrict Display display,
-				const unsigned int *const restrict io_move_map,
+				const struct *const restrict *io_move_map,
 				const unsigned int cell_count);
 
 
@@ -10,7 +10,7 @@ extern inline void display_init(struct *const restrict Display display,
  * initializes string representation
  * ────────────────────────────────────────────────────────────────────────── */
 inline void string_init(struct *const restrict DisplayString string,
-			const unsigned int *const restrict io_move_map,
+			const struct UTF8Char *const restrict io_move_map,
 			const unsigned int cell_count)
 {
 	HANDLE_MALLOC(string->cells,

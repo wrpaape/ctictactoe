@@ -13,7 +13,7 @@ extern "C" {
  * ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
 #include "tictactoe_token.h"		/* struct Token */
-#include <system_utils/stdio_utils.h>	/* stdio winsizee, misc handlers */
+#include <system_utils/stdio_utils.h>	/* stdio_winsize, misc handlers */
 
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  * EXTERNAL DEPENDENCIES
@@ -113,7 +113,6 @@ inline void display_init(struct *const restrict Display display,
 	string_init(&display->string,
 		    io_move_map,
 		    cell_count);
-
 }
 
 
