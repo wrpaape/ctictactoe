@@ -1,3 +1,0 @@
-# tictactoe
-
-## TODO: everything
