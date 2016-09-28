@@ -1,13 +1,7 @@
-include $(MAKEFILE_SCAFFOLD)
+all: ../bin/tictactoe
 
-define RULES
-$(call USER_BINARY,tictactoe)
-$(call TEST_BINARY,tictactoe)
-endef
-
-$(eval $(RULES))
-
-all: $(TARGETS)
+../bin/tictactoe: tictactoe.c tictactoe.h
+	gcc $< -o $@
 
 clean:
 	$(RM) $(RM_FLAGS) $(TARGETS)
