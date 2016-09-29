@@ -71,18 +71,6 @@ struct MoveNode moves[9] = {
 
 struct MoveNode *rem_moves = &moves[0];
 
-/* struct MoveNode move0 = { .move = MOVE(0), .cell = 0u }; */
-/* struct MoveNode move1 = { .move = MOVE(1), .cell = 1u }; */
-/* struct MoveNode move2 */
-/* struct MoveNode move3 */
-/* struct MoveNode move4 */
-/* struct MoveNode move5 */
-/* struct MoveNode move6 */
-/* struct MoveNode move6 */
-
-
-
-
 unsigned int board_moveset    = 0u;
 unsigned int player_moveset   = 0u;
 unsigned int computer_moveset = 0u;
@@ -109,8 +97,6 @@ char *const restrict display_map[9] = {
 	[7] = &display[174],
 	[8] = &display[180]
 };
-
-
 
 
 static inline bool

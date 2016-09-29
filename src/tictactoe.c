@@ -241,7 +241,9 @@ score_player_move(struct MoveNode *restrict move,
 					player);
 	rem_moves = move;
 
-	for (move = move->next; move != NULL; move = move->next) {
+	move = move->next;
+
+	do {
 		remove_move(move);
 		score = score_computer_move(move,
 					    computer,
@@ -250,7 +252,9 @@ score_player_move(struct MoveNode *restrict move,
 
 		if (score > max_score)
 			max_score = score;
-	}
+
+		move = move->next;
+	} while (move != NULL);
 
 	return max_score;
 }
@@ -269,8 +273,7 @@ score_computer_move(struct MoveNode *restrict move,
 	if (is_winner(computer))
 		return 1;
 
-	if (rem_moves == NULL)
-		return 0;
+	/* computer will never make the last move */
 
 	move	  = rem_moves;
 	rem_moves = rem_moves->next;
