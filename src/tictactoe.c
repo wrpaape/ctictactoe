@@ -3,38 +3,27 @@
 int
 main(void)
 {
-	unsigned int taken = 0u;
-	unsigned int cell;
-	unsigned int move;
+	while (1) {
+		player_move();
 
-	do {
-		print_board();
-
-		cell = get_cell();
-
-		move = MOVE(cell);
-
-		if ((move & taken) == move) {
-			write_stdout("cell taken\n",
-				     sizeof("cell taken\n") - 1lu);
-			continue;
+		if (is_winner(player_moveset)) {
+			player_wins();
+			return 0;
 		}
 
-		taken |= move;
+		if (board_moveset == CATS_GAME) {
+			cats_game();
+			return 0;
+		}
 
-		update_board(cell,
-			     'X');
+		computer_move();
 
-	} while (!is_winner(taken));
-
-	print_board();
-
-	write_stdout("game over\n",
-		     sizeof("game over\n") - 1lu);
-
-	return 0;
+		if (is_winner(computer_moveset)) {
+			computer_wins();
+			return 0;
+		}
+	}
 }
-
 
 static inline bool
 is_winner(const unsigned int moveset)
@@ -50,10 +39,47 @@ is_winner(const unsigned int moveset)
 }
 
 static inline void
-update_board(const unsigned int cell,
-	     const char token)
+update_display(const unsigned int cell,
+	       const char token)
 {
-	*(board_map[cell]) = token;
+	*(display_map[cell]) = token;
+}
+
+static inline void
+remove_move(struct MoveNode *const restrict move)
+{
+	struct MoveNode *const restrict prev = move->prev;
+	struct MoveNode *const restrict next = move->next;
+
+	if (prev != NULL)
+		prev->next = next;
+
+	if (next != NULL)
+		next->prev = prev;
+}
+
+static inline void
+insert_move(struct MoveNode *const restrict move)
+{
+	struct MoveNode *const restrict prev = move->prev;
+	struct MoveNode *const restrict next = move->next;
+
+	if (prev != NULL)
+		prev->next = move;
+
+	if (next != NULL)
+		next->prev = move;
+}
+
+static inline void
+update_moves(const unsigned int cell)
+{
+	struct MoveNode *const restrict move = &moves[cell];
+
+	if (move == rem_moves)
+		rem_moves = rem_moves->next;
+
+	remove_move(move);
 }
 
 static inline void
@@ -116,19 +142,39 @@ write_stdout(const char *const restrict buffer,
 }
 
 static inline void
-print_board(void)
+print_display(void)
 {
-	write_stdout(&board[0],
-		     sizeof(board) - 1lu);
+	write_stdout(&display[0],
+		     sizeof(display) - 1lu);
 }
 
+static inline void
+player_wins(void)
+{
+	print_display();
+	PRINT_LITERAL("player wins\n");
+}
+
+static inline void
+computer_wins(void)
+{	print_display();
+	PRINT_LITERAL("computer wins\n");
+}
+
+static inline void
+cats_game(void)
+{
+	print_display();
+	PRINT_LITERAL("cats game\n");
+}
+
+
+
+
 static inline unsigned int
-get_cell(void)
+get_player_cell(void)
 {
 	char input;
-
-	write_stdout("player move:\n",
-		     sizeof("player move:\n") - 1lu);
 
 	while (1) {
 		read_stdin(&input,
@@ -139,8 +185,169 @@ get_cell(void)
 		if ((input < '9') && (input > '/'))
 			return ASCII_TO_DIGIT(input);
 
-		write_stdout("invalid input\n",
-			     sizeof("invalid input\n") - 1lu);
+		PRINT_LITERAL("invalid input\n> ");
 	}
 }
 
+
+static inline void
+player_move(void)
+{
+	unsigned int cell;
+	unsigned int move;
+
+	print_display();
+	PRINT_LITERAL("player move\n> ");
+
+	while (1) {
+		cell = get_player_cell();
+
+		move = MOVE(cell);
+
+		if ((move & board_moveset) == 0u)
+			break;
+
+		PRINT_LITERAL("cell taken\n> ");
+	}
+
+	board_moveset  |= move;
+	player_moveset |= move;
+
+	update_moves(cell);
+	update_display(cell,
+		       player_token);
+}
+
+int
+score_player_move(struct MoveNode *restrict move,
+		  unsigned int player,
+		  const unsigned int computer)
+{
+	int score;
+	int max_score;
+
+	player |= move->move;
+
+	if (is_winner(player))
+		return -1;
+
+	if (rem_moves == NULL)
+		return 0;
+
+	move	  = rem_moves;
+	rem_moves = rem_moves->next;
+	max_score = score_computer_move(move,
+					computer,
+					player);
+	rem_moves = move;
+
+	for (move = move->next; move != NULL; move = move->next) {
+		remove_move(move);
+		score = score_computer_move(move,
+					    computer,
+					    player);
+		insert_move(move);
+
+		if (score > max_score)
+			max_score = score;
+	}
+
+	return max_score;
+}
+
+
+int
+score_computer_move(struct MoveNode *restrict move,
+		    unsigned int computer,
+		    const unsigned int player)
+{
+	int score;
+	int min_score;
+
+	computer |= move->move;
+
+	if (is_winner(computer))
+		return 1;
+
+	if (rem_moves == NULL)
+		return 0;
+
+	move	  = rem_moves;
+	rem_moves = rem_moves->next;
+	min_score = score_player_move(move,
+				      player,
+				      computer);
+	rem_moves = move;
+
+	for (move = move->next; move != NULL; move = move->next) {
+		remove_move(move);
+		score = score_player_move(move,
+					  player,
+					  computer);
+		insert_move(move);
+
+		if (score < min_score)
+			min_score = score;
+	}
+
+	return min_score;
+}
+
+
+static inline unsigned int
+get_computer_cell(void)
+{
+	int score;
+	int max_score;
+	unsigned int cell;
+	struct MoveNode *move;
+
+	move	  = rem_moves;
+	rem_moves = rem_moves->next;
+	max_score = score_computer_move(move,
+					computer_moveset,
+					player_moveset);
+	rem_moves = move;
+	cell      = rem_moves->cell;
+
+	for (move = move->next; move != NULL; move = move->next) {
+		remove_move(move);
+		score = score_computer_move(move,
+					    computer_moveset,
+					    player_moveset);
+		insert_move(move);
+
+		if (score > max_score) {
+			max_score = score;
+			cell	  = move->cell;
+		}
+	}
+
+	return cell;
+}
+
+
+static inline void
+computer_move(void)
+{
+	static char input[] = "0\n";
+
+	print_display();
+	PRINT_LITERAL("computer move\n> ");
+
+	const unsigned int cell = get_computer_cell();
+
+	input[0] = DIGIT_TO_ASCII(cell);
+
+	write_stdout(&input[0],
+		     sizeof(input));
+
+	const unsigned int move = MOVE(cell);
+
+	board_moveset    |= move;
+	computer_moveset |= move;
+
+	update_moves(cell);
+	update_display(cell,
+		       computer_token);
+}
